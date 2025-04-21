@@ -1,8 +1,6 @@
-# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-
 import io
 from typing import Any
-
+import asyncio
 import cv2
 
 from ultralytics import YOLO
@@ -120,7 +118,12 @@ class Inference:
 
         if self.source == "webcam":
             self.st.sidebar.success("✅ Webcam ready. Click below to start!")
-            
+
+            # Chạy vòng lặp asyncio nếu chưa có vòng lặp
+            if not asyncio.get_event_loop().is_running():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
             webrtc_streamer(
                 key="yolo-stream",
                 video_transformer_factory=lambda: YOLOTransformer(
