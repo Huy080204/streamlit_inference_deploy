@@ -120,6 +120,7 @@ class Inference:
 
         if self.source == "webcam":
             self.st.sidebar.success("✅ Webcam ready. Click below to start!")
+            
             webrtc_streamer(
                 key="yolo-stream",
                 video_transformer_factory=lambda: YOLOTransformer(
@@ -131,7 +132,18 @@ class Inference:
                 ),
                 media_stream_constraints={"video": True, "audio": False},
                 async_processing=True,
+                rtc_configuration={
+                    "iceServers": [
+                        {"urls": "stun:stun.l.google.com:19302"},  # STUN server của Google
+                        {
+                            "urls": "turn:openrelay.metered.ca:80",
+                            "username": "openrelayproject",  # Username do Metered cung cấp
+                            "credential": "openrelayproject"  # Mật khẩu do Metered cung cấp
+                        }
+                    ]
+                }
             )
+
         elif self.source == "video":
             self.source_upload()
             if self.vid_file_name:
