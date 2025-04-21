@@ -1,13 +1,47 @@
+import io
+from typing import Any
 import asyncio
+import cv2
 
-# Kiểm tra và tạo vòng lặp sự kiện asyncio cho thread chính
+from ultralytics import YOLO
+from ultralytics.utils import LOGGER
+from ultralytics.utils.checks import check_requirements
+from ultralytics.utils.downloads import GITHUB_ASSETS_STEMS
+
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+import av
+
+
+# Khởi tạo vòng lặp sự kiện asyncio
 def ensure_asyncio_loop():
     try:
         loop = asyncio.get_event_loop()
-    except RuntimeError:  # Nếu không có vòng lặp sự kiện, tạo mới
+    except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
     return loop
+
+
+class YOLOTransformer(VideoTransformerBase):
+    def __init__(self, model, conf=0.25, iou=0.45, selected_ind=None, enable_trk=False):
+        self.model = model
+        self.conf = conf
+        self.iou = iou
+        self.selected_ind = selected_ind or []
+        self.enable_trk = enable_trk
+
+    def transform(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+
+        if self.enable_trk:
+            results = self.model.track(
+                img, conf=self.conf, iou=self.iou, classes=self.selected_ind, persist=True
+            )
+        else:
+            results = self.model(img, conf=self.conf, iou=self.iou, classes=self.selected_ind)
+
+        return results[0].plot()
+
 
 class Inference:
     def __init__(self, **kwargs: Any):
